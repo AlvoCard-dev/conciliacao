@@ -6,7 +6,7 @@ const STORAGE_SESSION = "alvo_card_session_v1";
 
 /* ---------------- Supabase ---------------- */
 
-const SUPABASE_URL = "https://xobtvogansqhwledysq.supabase.co";
+const SUPABASE_URL = "https://xobtvoganslqhwledysq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvYnR2b2dhbnNscWh3bGVkeXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTUyMjEsImV4cCI6MjA5NzE3MTIyMX0.E0kES6d1-jr3yxWFC4ZsE8MQ7ttOR5dOHovJiZtjXkA";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
