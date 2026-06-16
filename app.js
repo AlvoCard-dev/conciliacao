@@ -286,9 +286,7 @@ async function handleExtratoFile(file) {
 
     extratoData = { convCol, dataCol, headers, rows, importadoEm: new Date().toISOString() };
     localStorage.setItem(STORAGE_EXTRATO, JSON.stringify(extratoData));
-    // Salva versão sem "raw" no Supabase para reduzir tamanho
-    const extratoCompacto = { ...extratoData, rows: rows.map(({ raw, ...r }) => r) };
-    sbSave("extrato", extratoCompacto)
+    sbSave("extrato", extratoData)
       .then(() => showToast("Extrato sincronizado com servidor ✓", "success", 3000))
       .catch((err) => { console.error(err); showToast("Erro ao sincronizar extrato: " + err.message, "error", 6000); });
 
