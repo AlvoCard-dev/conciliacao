@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alvo Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <form class="login-card" id="login-form">
+    <img class="login-logo" src="logo.png" alt="Alvo Card">
+    <h1>Painel Financeiro</h1>
+    <p class="subtitle">Faça login para continuar</p>
+
+    <div class="field">
+      <label for="login-user">Usuário</label>
+      <input type="text" id="login-user" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="login-pass">Senha</label>
+      <input type="password" id="login-pass" autocomplete="current-password" required>
+    </div>
+
+    <p class="login-error" id="login-error" hidden>Usuário ou senha inválidos.</p>
+
+    <button type="submit" class="btn-primary login-submit">Entrar</button>
+  </form>
+</div>
+
+<div class="loading-overlay" id="loading-overlay" hidden>
+  <div class="spinner"></div>
+  <p id="loading-text">Processando...</p>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<header class="topbar">
+  <button class="topbar-toggle" id="topbar-toggle" aria-label="Abrir menu">
+    <span></span><span></span><span></span>
+  </button>
+  <img class="topbar-logo-img" src="logo.png" alt="Alvo Card">
+</header>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <img class="brand-logo-img" src="logo.png" alt="Alvo Card">
+    <span class="brand-sub">Painel Financeiro</span>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-link active" data-page="home">
+      <span class="icon">🏠</span> Home
+    </button>
+
+    <button class="nav-link" data-page="importar">
+      <span class="icon">📥</span> Importar Dados
+    </button>
+
+    <div class="nav-group">
+      <span class="nav-group-title">Extrato</span>
+      <button class="nav-link" data-page="ranking">
+        <span class="icon">📊</span> Ranking
+      </button>
+      <button class="nav-link" data-page="evolucao">
+        <span class="icon">📈</span> Evolução
+      </button>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-title">Arquivos Retorno</span>
+      <button class="nav-link" data-page="retorno">
+        <span class="icon">📂</span> Retorno BPO
+      </button>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-title">Análises</span>
+      <button class="nav-link" data-page="conciliacao">
+        <span class="icon">🔄</span> Conciliação
+      </button>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="status-pills">
+      <div class="status-pill" id="status-extrato">
+        <span class="status-dot"></span> Extrato não carregado
+      </div>
+      <div class="status-pill" id="status-retorno">
+        <span class="status-dot"></span> Retorno não carregado
+      </div>
+    </div>
+    <button id="btn-limpar" class="btn-ghost">🗑 Limpar dados</button>
+    <div class="user-info">
+      <span id="user-info-name">—</span>
+      <button id="btn-logout" class="btn-ghost btn-logout" title="Sair">🚪 Sair</button>
+    </div>
+  </div>
+</aside>
+
+<main class="content">
+
+  <!-- HOME -->
+  <section id="page-home" class="page active">
+
+    <div class="home-header">
+      <div>
+        <p class="home-greeting" id="home-greeting">Bem-vindo</p>
+        <h1 class="home-title">Dashboard Principal</h1>
+      </div>
+      <div class="home-header-right">
+        <span class="home-last-update" id="home-last-update"></span>
+      </div>
+    </div>
+
+    <div class="panel cta-panel" id="home-cta">
+      <div>
+        <h2>Nenhum dado importado</h2>
+        <p class="hint">Importe o extrato e o arquivo de retorno para visualizar os indicadores, gráficos e a conciliação.</p>
+      </div>
+      <button id="home-cta-btn" class="btn-primary">Ir para Importar Dados</button>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-body">
+          <span class="kpi-label">Total Crédito</span>
+          <span class="kpi-value" id="home-total-c">R$ 0,00</span>
+        </div>
+        <div class="kpi-icon kpi-icon-success">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="kpi-bar kpi-bar-success"></div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-body">
+          <span class="kpi-label">Total Débito</span>
+          <span class="kpi-value" id="home-total-d">R$ 0,00</span>
+        </div>
+        <div class="kpi-icon kpi-icon-danger">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+        </div>
+        <div class="kpi-bar kpi-bar-danger"></div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-body">
+          <span class="kpi-label">Saldo Líquido</span>
+          <span class="kpi-value" id="home-saldo">R$ 0,00</span>
+        </div>
+        <div class="kpi-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <div class="kpi-bar"></div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-body">
+          <span class="kpi-label">Convênios Ativos</span>
+          <span class="kpi-value" id="home-conv">0</span>
+        </div>
+        <div class="kpi-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M10 22V12h4v10"/></svg>
+        </div>
+        <div class="kpi-bar"></div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-body">
+          <span class="kpi-label">Taxa de Conciliação</span>
+          <span class="kpi-value kpi-value-success" id="home-taxa-conciliacao">0%</span>
+        </div>
+        <div class="kpi-icon kpi-icon-success">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="kpi-bar kpi-bar-success"></div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-body">
+          <span class="kpi-label">Pendências</span>
+          <span class="kpi-value kpi-value-warning" id="home-pendencias">0</span>
+        </div>
+        <div class="kpi-icon kpi-icon-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="kpi-bar kpi-bar-warning"></div>
+      </div>
+    </div>
+
+    <!-- Insights 2×2 -->
+    <div class="home-insights">
+
+      <div class="panel home-insights-panel">
+        <div class="panel-header">
+          <h2>Crédito x Débito</h2>
+          <span class="panel-hint">Distribuição do extrato</span>
+        </div>
+        <div class="chart-box chart-box-home">
+          <canvas id="chart-credito-debito"></canvas>
+          <p id="chart-credito-debito-empty" class="empty-state" hidden>Sem dados do extrato.</p>
+        </div>
+      </div>
+
+      <div class="panel home-insights-panel">
+        <div class="panel-header">
+          <h2>Top 5 Convênios por Saldo</h2>
+          <span class="panel-hint">Maior saldo líquido</span>
+        </div>
+        <div class="chart-box chart-box-home">
+          <canvas id="chart-top-convenios"></canvas>
+          <p id="chart-top-convenios-empty" class="empty-state" hidden>Sem dados do extrato.</p>
+        </div>
+      </div>
+
+      <div class="panel home-insights-panel">
+        <div class="panel-header">
+          <h2>Status da Conciliação</h2>
+          <span class="panel-hint">Convênios com Retorno e Extrato cruzados</span>
+        </div>
+        <div class="chart-box chart-box-home">
+          <canvas id="chart-home-conciliacao-status"></canvas>
+          <p id="chart-home-conciliacao-status-empty" class="empty-state" hidden>Nenhum convênio cruzado ainda.</p>
+        </div>
+      </div>
+
+      <div class="panel home-insights-panel">
+        <div class="panel-header">
+          <h2>Maiores Divergências</h2>
+          <span class="panel-hint">Top 5 por diferença absoluta</span>
+        </div>
+        <div class="table-wrapper home-div-table">
+          <table id="home-divergencias-table">
+            <thead>
+              <tr>
+                <th>Convênio / Mês</th>
+                <th>Diferença</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="home-divergencias-tbody"></tbody>
+          </table>
+          <p id="home-divergencias-empty" class="empty-state" hidden>Nenhuma divergência encontrada.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- IMPORTAR -->
+  <section id="page-importar" class="page">
+    <header class="page-header">
+      <div>
+        <h1>📥 Importar Dados</h1>
+        <p class="subtitle">Carregue os arquivos de origem para alimentar o painel</p>
+      </div>
+    </header>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h2>📄 Extrato Bancário</h2>
+        <p class="hint">Arquivo .xlsx com o extrato bancário (colunas de Data Movimentação, Convênio, Valor e Natureza)</p>
+        <label class="dropzone" for="input-extrato">
+          <span id="extrato-filename">Clique ou arraste o arquivo .xlsx aqui</span>
+        </label>
+        <input type="file" id="input-extrato" accept=".xlsx,.xls" hidden>
+      </div>
+
+      <div class="panel">
+        <h2>📄 Arquivo Retorno BPO</h2>
+        <p class="hint">Arquivo .csv com os dados de retorno (convenio, competencia, total_valor_descontado)</p>
+        <label class="dropzone" for="input-retorno">
+          <span id="retorno-filename">Clique ou arraste o arquivo .csv aqui</span>
+        </label>
+        <input type="file" id="input-retorno" accept=".csv" hidden>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>ℹ️ Status dos Dados</h2>
+      <div class="status-grid">
+        <div class="status-card" id="import-status-extrato">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Extrato</strong>
+            <p>Nenhum arquivo importado</p>
+          </div>
+        </div>
+        <div class="status-card" id="import-status-retorno">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Arquivo Retorno</strong>
+            <p>Nenhum arquivo importado</p>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Os dados ficam salvos no navegador (localStorage) e continuam disponíveis ao recarregar a página.</p>
+    </div>
+  </section>
+
+  <!-- RANKING -->
+  <section id="page-ranking" class="page">
+    <header class="page-header">
+      <div>
+        <h1>📊 Ranking Extrato</h1>
+        <p class="subtitle">Totais de crédito, débito e saldo por convênio</p>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-toolbar">
+        <div class="filters">
+          <div class="field">
+            <label for="ranking-convenio">Convênio</label>
+            <select id="ranking-convenio">
+              <option value="">Todos Convênios</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-outline" id="ranking-export">⬇ Exportar Excel</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="ranking-table">
+          <thead>
+            <tr>
+              <th>Convênio</th>
+              <th>Valor (D)</th>
+              <th>Valor (C)</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-tbody"></tbody>
+        </table>
+        <p id="ranking-empty" class="empty-state" hidden>Nenhum dado disponível. Importe o extrato em "Importar Dados".</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVOLUCAO -->
+  <section id="page-evolucao" class="page">
+    <header class="page-header">
+      <div>
+        <h1>📈 Evolução Extrato</h1>
+        <p class="subtitle">Totais por convênio e mês</p>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-toolbar">
+        <div class="filters">
+          <div class="field">
+            <label for="evolucao-convenio">Convênio</label>
+            <select id="evolucao-convenio">
+              <option value="">Todos Convênios</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="evolucao-inicio">De</label>
+            <input type="date" id="evolucao-inicio">
+          </div>
+          <div class="field">
+            <label for="evolucao-fim">Até</label>
+            <input type="date" id="evolucao-fim">
+          </div>
+        </div>
+        <button class="btn-outline" id="evolucao-export">⬇ Exportar Excel</button>
+      </div>
+
+      <div class="chart-box chart-box-tall">
+        <canvas id="chart-evolucao"></canvas>
+        <p id="chart-evolucao-empty" class="empty-state" hidden>Nenhum dado disponível para o gráfico.</p>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="evolucao-table">
+          <thead>
+            <tr>
+              <th>Convênio</th>
+              <th>Mês</th>
+              <th>Valor (D)</th>
+              <th>Valor (C)</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody id="evolucao-tbody"></tbody>
+        </table>
+        <p id="evolucao-empty" class="empty-state" hidden>Nenhum dado disponível. Importe o extrato em "Importar Dados".</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RETORNO -->
+  <section id="page-retorno" class="page">
+    <header class="page-header">
+      <div>
+        <h1>📂 Arquivos Retorno</h1>
+        <p class="subtitle">Valores descontados por convênio e competência</p>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-toolbar">
+        <div class="filters">
+          <div class="field">
+            <label for="retorno-convenio">Convênio</label>
+            <select id="retorno-convenio">
+              <option value="">Todos Convênios</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="retorno-competencia">Competência</label>
+            <select id="retorno-competencia">
+              <option value="">Todas Competências</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-outline" id="retorno-export">⬇ Exportar Excel</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="retorno-table">
+          <thead>
+            <tr>
+              <th>Convênio</th>
+              <th>Competência</th>
+              <th>Total Valor Descontado</th>
+            </tr>
+          </thead>
+          <tbody id="retorno-tbody"></tbody>
+        </table>
+        <p id="retorno-empty" class="empty-state" hidden>Nenhum dado disponível. Importe o arquivo de retorno em "Importar Dados".</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONCILIACAO -->
+  <section id="page-conciliacao" class="page">
+    <header class="page-header">
+      <div>
+        <h1>🔄 Conciliação</h1>
+        <p class="subtitle">Cruzamento entre o Arquivo Retorno (descontado) e o Extrato (crédito recebido), por convênio e mês</p>
+      </div>
+    </header>
+
+    <div class="conciliacao-summary">
+      <div class="summary-card summary-success">
+        <span class="summary-value" id="conc-summary-ok">0</span>
+        <span class="summary-label">Conciliados</span>
+      </div>
+      <div class="summary-card summary-danger">
+        <span class="summary-value" id="conc-summary-divergente">0</span>
+        <span class="summary-label">Divergentes</span>
+      </div>
+      <div class="summary-card summary-warning">
+        <span class="summary-value" id="conc-summary-sem-retorno">0</span>
+        <span class="summary-label">Sem Retorno</span>
+      </div>
+      <div class="summary-card summary-warning">
+        <span class="summary-value" id="conc-summary-sem-extrato">0</span>
+        <span class="summary-label">Sem Extrato</span>
+      </div>
+    </div>
+
+    <div class="chart-grid chart-grid-conciliacao">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Status da Conciliação</h2>
+          <span class="panel-hint">Convênios com Retorno e Extrato cruzados</span>
+        </div>
+        <div class="chart-box chart-box-tall">
+          <canvas id="chart-conciliacao-status"></canvas>
+          <p id="chart-conciliacao-status-empty" class="empty-state" hidden>Nenhum convênio com Retorno e Extrato cruzados.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Retorno x Extrato</h2>
+          <span class="panel-hint">Maiores convênios em volume</span>
+        </div>
+        <div class="chart-box chart-box-tall">
+          <canvas id="chart-conciliacao-comparativo"></canvas>
+          <p id="chart-conciliacao-comparativo-empty" class="empty-state" hidden>Nenhum convênio com Retorno e Extrato para comparar.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-toolbar">
+        <div class="filters">
+          <div class="field">
+            <label for="conciliacao-convenio">Convênio</label>
+            <select id="conciliacao-convenio">
+              <option value="">Todos Convênios</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="conciliacao-mes">Mês</label>
+            <select id="conciliacao-mes">
+              <option value="">Todos os Meses</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="conciliacao-status">Status</label>
+            <select id="conciliacao-status">
+              <option value="">Todos</option>
+              <option value="ok">Conciliado</option>
+              <option value="conciliado-maior">Conciliado a maior</option>
+              <option value="conciliado-menor">Conciliado a menor</option>
+              <option value="divergente">Divergente</option>
+              <option value="sem-extrato">Sem Extrato</option>
+              <option value="sem-retorno">Sem Retorno</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-outline" id="conciliacao-export">⬇ Exportar Excel</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="conciliacao-table">
+          <thead>
+            <tr>
+              <th>Convênio</th>
+              <th>Mês</th>
+              <th>Valor Retorno</th>
+              <th>Valor Extrato</th>
+              <th>Diferença</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="conciliacao-tbody"></tbody>
+        </table>
+        <p id="conciliacao-empty" class="empty-state" hidden>Importe o Extrato e o Arquivo Retorno para gerar a conciliação.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

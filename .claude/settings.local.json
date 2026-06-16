@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(node -e \"console.log\\('node ok'\\)\")",
+      "Bash(ls *.xlsx *.csv)",
+      "Bash(find / -maxdepth 6 -iname \"extrato*.xlsx\")",
+      "Bash(node -c app.js)",
+      "Bash(python3 -)"
+    ]
+  }
+}
