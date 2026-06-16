@@ -49,21 +49,22 @@ const MESES_PT = {
 };
 
 const CHART_COLORS = {
-  accent: "#6366f1",
-  accentLight: "#818cf8",
-  success: "#10b981",
-  successLight: "#34d399",
-  teal: "#0d9488",
-  warning: "#f59e0b",
-  warningLight: "#fb923c",
-  danger: "#ef4444",
-  textDim: "#94a3b8",
-  grid: "rgba(148,163,184,.12)",
+  accent:       "#3B82F6",
+  accentLight:  "#60A5FA",
+  success:      "#10B981",
+  successLight: "#34D399",
+  teal:         "#0D9488",
+  warning:      "#F59E0B",
+  warningLight: "#FBBF24",
+  danger:       "#EF4444",
+  textDim:      "#94A3B8",
+  grid:         "rgba(255,255,255,.05)",
 };
 
 if (typeof Chart !== "undefined") {
   Chart.defaults.color = CHART_COLORS.textDim;
   Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 12;
   Chart.defaults.borderColor = CHART_COLORS.grid;
 }
 
@@ -1354,7 +1355,6 @@ function loadFromStorage() {
   // Sincroniza com Supabase em background — atualiza se tiver dado mais recente
   Promise.all([sbLoad("extrato"), sbLoad("retorno")])
     .then(([extVal, retVal]) => {
-      showToast(`Supabase: extrato=${extVal ? "ok" : "vazio"} retorno=${retVal ? "ok" : "vazio"}`, "info", 6000);
       let atualizado = false;
 
       if (extVal && extVal.importadoEm !== extratoData?.importadoEm) {

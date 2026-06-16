@@ -6,7 +6,7 @@
 <title>Alvo Card</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -56,34 +56,34 @@
 
   <nav class="nav">
     <button class="nav-link active" data-page="home">
-      <span class="icon">🏠</span> Home
+      <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Visão Geral
     </button>
 
     <button class="nav-link" data-page="importar">
-      <span class="icon">📥</span> Importar Dados
+      <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span> Importar Dados
     </button>
 
     <div class="nav-group">
       <span class="nav-group-title">Extrato</span>
       <button class="nav-link" data-page="ranking">
-        <span class="icon">📊</span> Ranking
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Ranking
       </button>
       <button class="nav-link" data-page="evolucao">
-        <span class="icon">📈</span> Evolução
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> Evolução
       </button>
     </div>
 
     <div class="nav-group">
-      <span class="nav-group-title">Arquivos Retorno</span>
+      <span class="nav-group-title">Retorno</span>
       <button class="nav-link" data-page="retorno">
-        <span class="icon">📂</span> Retorno BPO
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Arquivo Retorno
       </button>
     </div>
 
     <div class="nav-group">
       <span class="nav-group-title">Análises</span>
       <button class="nav-link" data-page="conciliacao">
-        <span class="icon">🔄</span> Conciliação
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg></span> Conciliação
       </button>
     </div>
   </nav>
@@ -97,10 +97,10 @@
         <span class="status-dot"></span> Retorno não carregado
       </div>
     </div>
-    <button id="btn-limpar" class="btn-ghost">🗑 Limpar dados</button>
+    <button id="btn-limpar" class="btn-ghost">Limpar dados</button>
     <div class="user-info">
       <span id="user-info-name">—</span>
-      <button id="btn-logout" class="btn-ghost btn-logout" title="Sair">🚪 Sair</button>
+      <button id="btn-logout" class="btn-ghost btn-logout" title="Sair">Sair</button>
     </div>
   </div>
 </aside>
@@ -261,14 +261,14 @@
   <section id="page-importar" class="page">
     <header class="page-header">
       <div>
-        <h1>📥 Importar Dados</h1>
+        <h1>Importar Dados</h1>
         <p class="subtitle">Carregue os arquivos de origem para alimentar o painel</p>
       </div>
     </header>
 
     <div class="grid-2">
       <div class="panel">
-        <h2>📄 Extrato Bancário</h2>
+        <h2>Extrato Bancário</h2>
         <p class="hint">Arquivo .xlsx com o extrato bancário (colunas de Data Movimentação, Convênio, Valor e Natureza)</p>
         <label class="dropzone" for="input-extrato">
           <span id="extrato-filename">Clique ou arraste o arquivo .xlsx aqui</span>
@@ -277,7 +277,7 @@
       </div>
 
       <div class="panel">
-        <h2>📄 Arquivo Retorno BPO</h2>
+        <h2>Arquivo Retorno BPO</h2>
         <p class="hint">Arquivo .csv com os dados de retorno (convenio, competencia, total_valor_descontado)</p>
         <label class="dropzone" for="input-retorno">
           <span id="retorno-filename">Clique ou arraste o arquivo .csv aqui</span>
@@ -287,7 +287,7 @@
     </div>
 
     <div class="panel">
-      <h2>ℹ️ Status dos Dados</h2>
+      <h2>Status dos Dados</h2>
       <div class="status-grid">
         <div class="status-card" id="import-status-extrato">
           <span class="status-dot"></span>
@@ -312,7 +312,7 @@
   <section id="page-ranking" class="page">
     <header class="page-header">
       <div>
-        <h1>📊 Ranking Extrato</h1>
+        <h1>Ranking por Convênio</h1>
         <p class="subtitle">Totais de crédito, débito e saldo por convênio</p>
       </div>
     </header>
@@ -327,7 +327,7 @@
             </select>
           </div>
         </div>
-        <button class="btn-outline" id="ranking-export">⬇ Exportar Excel</button>
+        <button class="btn-outline" id="ranking-export">Exportar Excel</button>
       </div>
 
       <div class="table-wrapper">
@@ -351,7 +351,7 @@
   <section id="page-evolucao" class="page">
     <header class="page-header">
       <div>
-        <h1>📈 Evolução Extrato</h1>
+        <h1>Evolução por Período</h1>
         <p class="subtitle">Totais por convênio e mês</p>
       </div>
     </header>
@@ -374,7 +374,7 @@
             <input type="date" id="evolucao-fim">
           </div>
         </div>
-        <button class="btn-outline" id="evolucao-export">⬇ Exportar Excel</button>
+        <button class="btn-outline" id="evolucao-export">Exportar Excel</button>
       </div>
 
       <div class="chart-box chart-box-tall">
@@ -404,7 +404,7 @@
   <section id="page-retorno" class="page">
     <header class="page-header">
       <div>
-        <h1>📂 Arquivos Retorno</h1>
+        <h1>Arquivo Retorno BPO</h1>
         <p class="subtitle">Valores descontados por convênio e competência</p>
       </div>
     </header>
@@ -425,7 +425,7 @@
             </select>
           </div>
         </div>
-        <button class="btn-outline" id="retorno-export">⬇ Exportar Excel</button>
+        <button class="btn-outline" id="retorno-export">Exportar Excel</button>
       </div>
 
       <div class="table-wrapper">
@@ -448,7 +448,7 @@
   <section id="page-conciliacao" class="page">
     <header class="page-header">
       <div>
-        <h1>🔄 Conciliação</h1>
+        <h1>Conciliação</h1>
         <p class="subtitle">Cruzamento entre o Arquivo Retorno (descontado) e o Extrato (crédito recebido), por convênio e mês</p>
       </div>
     </header>
@@ -524,7 +524,7 @@
             </select>
           </div>
         </div>
-        <button class="btn-outline" id="conciliacao-export">⬇ Exportar Excel</button>
+        <button class="btn-outline" id="conciliacao-export">Exportar Excel</button>
       </div>
 
       <div class="table-wrapper">
