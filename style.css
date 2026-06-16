@@ -243,8 +243,10 @@ body {
 .login-screen {
   position: fixed; inset: 0; z-index: 200;
   display: grid;
-  grid-template-columns: 1fr 480px;
+  grid-template-columns: 1fr 460px;
+  grid-template-rows: 100vh;
   background: var(--bg);
+  overflow: hidden;
 }
 
 /* Left panel */
@@ -252,16 +254,17 @@ body {
   background: var(--sidebar);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
-  padding: 56px 72px;
+  padding: 56px 64px;
+  overflow: hidden;
 }
 
 .login-left-body {
   flex: 1;
   display: flex; flex-direction: column;
-  justify-content: center; gap: 32px;
+  justify-content: center; gap: 28px;
 }
 
-.login-brand-logo { width: 152px; height: auto; display: block }
+.login-brand-logo { width: 140px; max-width: 140px; height: auto; display: block; flex-shrink: 0 }
 
 .login-brand-tagline {
   font-size: 26px; font-weight: 600; line-height: 1.4;
@@ -288,8 +291,9 @@ body {
 /* Right panel */
 .login-right {
   display: flex; align-items: center; justify-content: center;
-  padding: 48px 56px;
+  padding: 48px 52px;
   background: var(--bg);
+  overflow-y: auto;
 }
 
 .login-card {
