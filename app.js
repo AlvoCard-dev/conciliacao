@@ -66,6 +66,31 @@ if (typeof Chart !== "undefined") {
   Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.font.size = 12;
   Chart.defaults.borderColor = CHART_COLORS.grid;
+
+  Chart.register({
+    id: "centerText",
+    afterDraw(chart) {
+      const opts = chart.config.options?.plugins?.centerText;
+      if (!opts) return;
+      const { ctx, chartArea } = chart;
+      if (!chartArea) return;
+      const cx = (chartArea.left + chartArea.right) / 2;
+      const cy = (chartArea.top + chartArea.bottom) / 2;
+      const hasLabel = !!opts.label;
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = opts.color || "#F1F5F9";
+      ctx.font = `700 ${opts.fontSize || 17}px Inter, sans-serif`;
+      ctx.fillText(opts.value, cx, hasLabel ? cy - 11 : cy);
+      if (hasLabel) {
+        ctx.font = `500 11px Inter, sans-serif`;
+        ctx.fillStyle = "#94A3B8";
+        ctx.fillText(opts.label, cx, cy + 12);
+      }
+      ctx.restore();
+    },
+  });
 }
 
 let chartCreditoDebito = null;
@@ -463,6 +488,15 @@ function renderChartCreditoDebito(totalC, totalD) {
   canvas.style.display = "";
   empty.hidden = true;
 
+  const saldo = totalC - totalD;
+  const saldoAbrev = (() => {
+    const abs = Math.abs(saldo);
+    const sign = saldo < 0 ? "-" : "";
+    if (abs >= 1e6) return `${sign}R$ ${(abs / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}R$ ${(abs / 1e3).toFixed(0)}K`;
+    return moeda(saldo);
+  })();
+
   chartCreditoDebito = new Chart(canvas, {
     type: "doughnut",
     data: {
@@ -478,8 +512,9 @@ function renderChartCreditoDebito(totalC, totalD) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: "65%",
+      cutout: "68%",
       plugins: {
+        centerText: { value: saldoAbrev, label: "Saldo", color: saldo >= 0 ? CHART_COLORS.success : CHART_COLORS.danger },
         legend: { position: "bottom" },
         tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${moeda(ctx.raw)}` } },
       },
@@ -964,6 +999,8 @@ function renderStatusDonut(canvasId, emptyId, dados, existingChart) {
 
   const statusOrdenados = Object.keys(STATUS_DONUT_COLORS).filter((s) => contagem.has(s));
   const total = cruzados.length;
+  const conciliados = cruzados.filter((r) => r.status !== "divergente").length;
+  const taxa = Math.round((conciliados / total) * 100);
 
   canvas.style.display = "";
   empty.hidden = true;
@@ -985,6 +1022,7 @@ function renderStatusDonut(canvasId, emptyId, dados, existingChart) {
       maintainAspectRatio: false,
       cutout: "70%",
       plugins: {
+        centerText: { value: `${taxa}%`, label: "Conciliado", color: taxa >= 70 ? CHART_COLORS.success : taxa >= 40 ? CHART_COLORS.warning : CHART_COLORS.danger },
         legend: { position: "bottom", labels: { boxWidth: 12, padding: 14 } },
         tooltip: {
           callbacks: {
