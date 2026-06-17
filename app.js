@@ -1243,9 +1243,22 @@ function setupFilters() {
   document.getElementById("evolucao-fim").addEventListener("change", renderEvolucao);
   document.getElementById("retorno-convenio").addEventListener("change", renderRetorno);
   document.getElementById("retorno-competencia").addEventListener("change", renderRetorno);
-  document.getElementById("conciliacao-convenio").addEventListener("change", renderConciliacao);
-  document.getElementById("conciliacao-mes").addEventListener("change", renderConciliacao);
-  document.getElementById("conciliacao-status").addEventListener("change", renderConciliacao);
+  const concFilters = ["conciliacao-convenio", "conciliacao-mes", "conciliacao-status"];
+  const clearBtn = document.getElementById("conciliacao-clear-filters");
+
+  function onConciliacaoFilter() {
+    const hasFilter = concFilters.some((id) => document.getElementById(id).value !== "");
+    clearBtn.hidden = !hasFilter;
+    renderConciliacao();
+  }
+
+  concFilters.forEach((id) => document.getElementById(id).addEventListener("change", onConciliacaoFilter));
+
+  clearBtn.addEventListener("click", () => {
+    concFilters.forEach((id) => (document.getElementById(id).value = ""));
+    clearBtn.hidden = true;
+    renderConciliacao();
+  });
 }
 
 function updateStatusPills() {
