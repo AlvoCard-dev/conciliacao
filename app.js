@@ -1132,6 +1132,14 @@ function renderConciliacao() {
 
   const filtered = filtrarConciliacao(dados);
 
+  const clearBtn = document.getElementById("conciliacao-clear-filters");
+  if (clearBtn) {
+    const hasFilter = ["conciliacao-convenio", "conciliacao-mes", "conciliacao-status"].some(
+      (id) => document.getElementById(id).value !== ""
+    );
+    clearBtn.hidden = !hasFilter;
+  }
+
   let totalExtrato = 0;
   let totalRetorno = 0;
 
