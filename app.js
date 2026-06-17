@@ -1115,8 +1115,8 @@ function renderConciliacao() {
     empty.hidden = false;
     fillSelect(selectConv, [], "Todos Convênios");
     fillSelect(selectMes, [], "Todos os Meses");
-    updateConciliacaoSummary(dados);
-    renderChartConciliacaoStatus(dados);
+    updateConciliacaoSummary([]);
+    renderChartConciliacaoStatus([]);
     renderChartConciliacaoComparativo([]);
     return;
   }
@@ -1167,8 +1167,8 @@ function renderConciliacao() {
     tbody.appendChild(tr);
   }
 
-  updateConciliacaoSummary(dados);
-  renderChartConciliacaoStatus(dados);
+  updateConciliacaoSummary(filtered);
+  renderChartConciliacaoStatus(filtered);
   renderChartConciliacaoComparativo(filtered);
 }
 
