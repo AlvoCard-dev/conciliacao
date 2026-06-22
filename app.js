@@ -112,6 +112,13 @@ function normalizeNome(s) {
 }
 
 // "abr/26" -> "04/2026"
+function mesAnoProximoMes(mesAno) {
+  if (!mesAno) return null;
+  const [m, a] = mesAno.split("/").map(Number);
+  const data = new Date(a, m - 1 + 1, 1);
+  return `${String(data.getMonth() + 1).padStart(2, "0")}/${data.getFullYear()}`;
+}
+
 function competenciaParaMesAno(competencia) {
   if (!competencia) return null;
   const partes = String(competencia).trim().toLowerCase().split("/");
@@ -879,7 +886,9 @@ function computeConciliacao() {
 
   if (retornoData) {
     for (const r of retornoData.rows) {
-      const mesAno = competenciaParaMesAno(r.competencia);
+      const mesAnoComp = competenciaParaMesAno(r.competencia);
+      if (!mesAnoComp) continue;
+      const mesAno = mesAnoProximoMes(mesAnoComp);
       if (!mesAno) continue;
 
       const key = `${normalizeNome(r.convenio)}__${mesAno}`;
