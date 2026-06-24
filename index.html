@@ -13,19 +13,13 @@
 <body>
 
 <!-- MANUTENCAO: remover este bloco para restaurar o site -->
-<div id="manutencao-overlay" style="position:fixed;inset:0;z-index:9999;background:#0A0F1C;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;font-family:'Inter',sans-serif;">
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  <div style="text-align:center;max-width:420px;padding:0 24px;">
-    <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#EF4444;">Indisponível no momento</p>
-    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#F1F5F9;letter-spacing:-.3px;">Erro de conexão</h1>
-    <p style="margin:0;font-size:14px;color:#94A3B8;line-height:1.6;">Estamos com uma instabilidade no <strong style="color:#F1F5F9;">Backend e Banco de Dados</strong>. Nossa equipe já está trabalhando na correção. Tente novamente em alguns instantes.</p>
-  </div>
-  <div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;">
-    <span style="width:6px;height:6px;border-radius:50%;background:#EF4444;display:inline-block;animation:pulse-dot 1.5s ease-in-out infinite;"></span>
-    Sistema em manutenção
-  </div>
+<div id="manutencao-overlay" style="position:fixed;inset:0;z-index:9999;background:#0A0F1C;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:48px;font-family:'Courier New',monospace;">
+  <p style="margin:0 0 4px;font-size:13px;color:#EF4444;">ConnectionError: Failed to reach backend service</p>
+  <p style="margin:0 0 4px;font-size:13px;color:#475569;">at initSupabaseClient (app.js:47:12)</p>
+  <p style="margin:0 0 4px;font-size:13px;color:#475569;">at loadFromStorage (app.js:203:5)</p>
+  <p style="margin:0 0 24px;font-size:13px;color:#475569;">at window.onload (app.js:1148:3)</p>
+  <p style="margin:0;font-size:12px;color:#475569;">ERR_CONNECTION_REFUSED · Database unreachable · retry after reconnect</p>
 </div>
-<style>#manutencao-overlay * { box-sizing: border-box } @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }</style>
 <!-- FIM MANUTENCAO -->
 
 <div class="login-screen" id="login-screen">
