@@ -3,6 +3,7 @@
 const STORAGE_EXTRATO = "alvo_card_extrato_v1";
 const STORAGE_RETORNO = "alvo_card_retorno_v1";
 const STORAGE_SESSION = "alvo_card_session_v1";
+const STORAGE_EXTRATO_SNAPSHOT = "alvo_card_extrato_snapshot_v1";
 
 /* ---------------- Supabase ---------------- */
 
@@ -317,6 +318,12 @@ async function handleExtratoFile(file) {
       };
     });
 
+    if (extratoData && extratoData.rows && extratoData.rows.length) {
+      const snapC = extratoData.rows.reduce((s, r) => s + r.valorC, 0);
+      const snapD = extratoData.rows.reduce((s, r) => s + r.valorD, 0);
+      localStorage.setItem(STORAGE_EXTRATO_SNAPSHOT, JSON.stringify({ totalC: snapC, totalD: snapD, savedAt: new Date().toISOString() }));
+    }
+
     extratoData = { convCol, dataCol, headers, rows, importadoEm: new Date().toISOString() };
     localStorage.setItem(STORAGE_EXTRATO, JSON.stringify(extratoData));
     sbSave("extrato", extratoData)
@@ -398,6 +405,30 @@ function renderHome() {
   document.getElementById("home-total-c").textContent = moeda(totalC);
   document.getElementById("home-total-d").textContent = moeda(totalD);
   document.getElementById("home-saldo").textContent = moeda(totalC - totalD);
+
+  try {
+    const snap = JSON.parse(localStorage.getItem(STORAGE_EXTRATO_SNAPSHOT));
+    const setDelta = (id, atual, anterior) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!snap || anterior == null) { el.hidden = true; return; }
+      const diff = atual - anterior;
+      const pct = anterior !== 0 ? ((diff / Math.abs(anterior)) * 100).toFixed(1) : null;
+      const sinal = diff >= 0 ? "▲" : "▼";
+      const abrev = (() => {
+        const abs = Math.abs(diff);
+        if (abs >= 1e6) return `R$ ${(abs / 1e6).toFixed(1)}M`;
+        if (abs >= 1e3) return `R$ ${(abs / 1e3).toFixed(0)}K`;
+        return moeda(diff);
+      })();
+      el.textContent = `${sinal} ${abrev}${pct != null ? ` (${pct}%)` : ""} vs importação anterior`;
+      el.className = `kpi-delta ${diff >= 0 ? "kpi-delta-up" : "kpi-delta-down"}`;
+      el.hidden = false;
+    };
+    setDelta("home-delta-c", totalC, snap?.totalC);
+    setDelta("home-delta-d", totalD, snap?.totalD);
+    setDelta("home-delta-saldo", totalC - totalD, snap ? snap.totalC - snap.totalD : null);
+  } catch { /* silencioso */ }
   document.getElementById("home-conv").textContent = conv;
 
   const dados = computeConciliacao();
