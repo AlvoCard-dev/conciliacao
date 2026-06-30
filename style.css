@@ -415,6 +415,16 @@ body {
   gap: 16px;
 }
 
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.extrato-originador-card h3 {
+  margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--text);
+}
+
 /* ── CTA panel ──────────────────────────────────────── */
 
 .cta-panel {

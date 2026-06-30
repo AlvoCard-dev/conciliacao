@@ -1,9 +1,13 @@
 "use strict";
 
-const STORAGE_EXTRATO = "alvo_card_extrato_v1";
+const STORAGE_EXTRATO = "alvo_card_extrato_v1"; // legado (migrado para Vem Benefícios)
+const STORAGE_EXTRATOS = "alvo_card_extratos_v2";
 const STORAGE_RETORNO = "alvo_card_retorno_v1";
 const STORAGE_SESSION = "alvo_card_session_v1";
 const STORAGE_EXTRATO_SNAPSHOT = "alvo_card_extrato_snapshot_v1";
+
+const ORIGINADORES = ["Vem Benefícios", "AlvoCard", "EiCard", "Juntos Card"];
+const ORIGINADOR_RETORNO = "Vem Benefícios"; // única origem cruzada com o BPO
 
 /* ---------------- Supabase ---------------- */
 
@@ -39,8 +43,32 @@ const USERS = {
   AlvoCard: { password: "@Conc2026", role: "viewer", label: "AlvoCard" },
 };
 
-let extratoData = null; // { convCol: string, rows: [{conv, data, mesAno, valorD, valorC}] }
+let extratosPorOriginador = {}; // { [originador]: { convCol, dataCol, headers, rows, importadoEm } | null }
+ORIGINADORES.forEach((o) => (extratosPorOriginador[o] = null));
 let retornoData = null; // { rows: [{convenio, competencia, valor}] }
+
+function getExtratoRows(originadorFiltro) {
+  const lista = originadorFiltro ? [originadorFiltro] : ORIGINADORES;
+  let rows = [];
+  for (const o of lista) {
+    const d = extratosPorOriginador[o];
+    if (d && d.rows && d.rows.length) rows = rows.concat(d.rows);
+  }
+  return rows;
+}
+
+function hasAnyExtrato() {
+  return ORIGINADORES.some((o) => extratosPorOriginador[o] && extratosPorOriginador[o].rows.length);
+}
+
+function countExtratoLancamentos() {
+  return ORIGINADORES.reduce((acc, o) => acc + (extratosPorOriginador[o]?.rows.length || 0), 0);
+}
+
+function latestExtratoImportadoEm() {
+  const datas = ORIGINADORES.map((o) => extratosPorOriginador[o]?.importadoEm).filter(Boolean);
+  return datas.length ? new Date(Math.max(...datas.map((d) => new Date(d).getTime()))) : null;
+}
 
 const TOLERANCIA = 0.01;
 
@@ -102,6 +130,10 @@ let chartConciliacaoComparativo = null;
 let chartHomeConciliacaoStatus = null;
 
 /* ---------------- Helpers ---------------- */
+
+function slugOriginador(o) {
+  return normalizeNome(o).replace(/\s+/g, "-");
+}
 
 function normalizeNome(s) {
   return String(s ?? "")
@@ -267,8 +299,8 @@ function showToast(message, type = "info", duration = 4000) {
 
 /* ---------------- Extrato (xlsx) ---------------- */
 
-async function handleExtratoFile(file) {
-  showLoading("Importando extrato...");
+async function handleExtratoFile(file, originador) {
+  showLoading(`Importando extrato (${originador})...`);
 
   try {
     const buf = await file.arrayBuffer();
@@ -314,27 +346,31 @@ async function handleExtratoFile(file) {
         mesAno,
         valorD: natureza === "D" ? valor : 0,
         valorC: natureza === "C" ? valor : 0,
+        originador,
         raw,
       };
     });
 
-    if (extratoData && extratoData.rows && extratoData.rows.length) {
-      const snapC = extratoData.rows.reduce((s, r) => s + r.valorC, 0);
-      const snapD = extratoData.rows.reduce((s, r) => s + r.valorD, 0);
+    const rowsAntesTodos = getExtratoRows();
+    if (rowsAntesTodos.length) {
+      const snapC = rowsAntesTodos.reduce((s, r) => s + r.valorC, 0);
+      const snapD = rowsAntesTodos.reduce((s, r) => s + r.valorD, 0);
       localStorage.setItem(STORAGE_EXTRATO_SNAPSHOT, JSON.stringify({ totalC: snapC, totalD: snapD, savedAt: new Date().toISOString() }));
     }
 
-    extratoData = { convCol, dataCol, headers, rows, importadoEm: new Date().toISOString() };
-    localStorage.setItem(STORAGE_EXTRATO, JSON.stringify(extratoData));
-    sbSave("extrato", extratoData)
+    extratosPorOriginador[originador] = { convCol, dataCol, headers, rows, importadoEm: new Date().toISOString() };
+    localStorage.setItem(STORAGE_EXTRATOS, JSON.stringify(extratosPorOriginador));
+    sbSave("extratos", extratosPorOriginador)
       .then(() => showToast("Extrato sincronizado com servidor ✓", "success", 3000))
       .catch((err) => { console.error(err); showToast("Erro ao sincronizar extrato: " + err.message, "error", 6000); });
 
-    document.getElementById("extrato-filename").textContent = `✅ ${file.name}`;
-    document.querySelector('label[for="input-extrato"]').classList.add("loaded");
+    const filenameEl = document.getElementById(`extrato-filename-${slugOriginador(originador)}`);
+    if (filenameEl) filenameEl.textContent = `✅ ${file.name}`;
+    const labelEl = document.querySelector(`label[for="input-extrato-${slugOriginador(originador)}"]`);
+    if (labelEl) labelEl.classList.add("loaded");
 
     renderAll();
-    showToast(`Extrato importado: ${rows.length} lançamentos.`, "success");
+    showToast(`Extrato (${originador}) importado: ${rows.length} lançamentos.`, "success");
   } catch (err) {
     console.error("Erro ao importar extrato:", err);
     showToast("Erro ao importar o extrato. Verifique o arquivo.", "error");
@@ -391,16 +427,14 @@ async function handleRetornoFile(file) {
 /* ---------------- Render: Home ---------------- */
 
 function renderHome() {
-  let totalC = 0;
-  let totalD = 0;
-  let conv = 0;
+  const selectOriginador = document.getElementById("home-originador");
+  fillSelect(selectOriginador, ORIGINADORES.filter((o) => extratosPorOriginador[o]), "Todos Originadores");
+  const filtroOriginador = selectOriginador.value;
 
-  if (extratoData) {
-    const { rows } = extratoData;
-    totalC = rows.reduce((acc, r) => acc + r.valorC, 0);
-    totalD = rows.reduce((acc, r) => acc + r.valorD, 0);
-    conv = uniqueSorted(rows.map((r) => r.conv)).length;
-  }
+  const rows = getExtratoRows(filtroOriginador);
+  const totalC = rows.reduce((acc, r) => acc + r.valorC, 0);
+  const totalD = rows.reduce((acc, r) => acc + r.valorD, 0);
+  const conv = uniqueSorted(rows.map((r) => r.conv)).length;
 
   document.getElementById("home-total-c").textContent = moeda(totalC);
   document.getElementById("home-total-d").textContent = moeda(totalD);
@@ -440,10 +474,11 @@ function renderHome() {
   const pendencias = dados.filter((r) => r.status !== "ok" && r.status !== "conciliado-maior" && r.status !== "conciliado-menor").length;
   document.getElementById("home-pendencias").textContent = pendencias;
 
-  const hasData = !!(extratoData && extratoData.rows.length) || !!(retornoData && retornoData.rows.length);
+  const hasData = hasAnyExtrato() || !!(retornoData && retornoData.rows.length);
   document.getElementById("home-cta").hidden = hasData;
 
-  const datas = [extratoData?.importadoEm, retornoData?.importadoEm].filter(Boolean).map((d) => new Date(d));
+  const ultimaExtrato = latestExtratoImportadoEm();
+  const datas = [ultimaExtrato, retornoData?.importadoEm ? new Date(retornoData.importadoEm) : null].filter(Boolean);
   const meta = document.getElementById("home-last-update");
   if (datas.length) {
     const ultima = new Date(Math.max(...datas.map((d) => d.getTime())));
@@ -458,8 +493,8 @@ function renderHome() {
   document.getElementById("home-greeting").textContent = `${saudacao}${session ? ", " + session.label : ""} · ${new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}`;
 
 
-  renderChartCreditoDebito(totalC, totalD);
-  renderChartTopConvenios();
+  renderChartCreditoDebito(totalC, totalD, rows);
+  renderChartTopConvenios(rows);
   renderChartHomeConciliacaoStatus(dados);
   renderHomeDivergencias(dados);
 }
@@ -500,7 +535,7 @@ function renderHomeDivergencias(dados) {
 
 /* ---------------- Charts: Home ---------------- */
 
-function renderChartCreditoDebito(totalC, totalD) {
+function renderChartCreditoDebito(totalC, totalD, rows) {
   const canvas = document.getElementById("chart-credito-debito");
   const empty = document.getElementById("chart-credito-debito-empty");
 
@@ -516,7 +551,7 @@ function renderChartCreditoDebito(totalC, totalD) {
     return;
   }
 
-  if (!extratoData || !extratoData.rows.length || (totalC === 0 && totalD === 0)) {
+  if (!rows.length || (totalC === 0 && totalD === 0)) {
     canvas.style.display = "none";
     empty.hidden = false;
     empty.textContent = "Sem dados do extrato.";
@@ -560,7 +595,7 @@ function renderChartCreditoDebito(totalC, totalD) {
   });
 }
 
-function renderChartTopConvenios() {
+function renderChartTopConvenios(rows) {
   const canvas = document.getElementById("chart-top-convenios");
   const empty = document.getElementById("chart-top-convenios-empty");
 
@@ -576,7 +611,7 @@ function renderChartTopConvenios() {
     return;
   }
 
-  if (!extratoData || !extratoData.rows.length) {
+  if (!rows.length) {
     canvas.style.display = "none";
     empty.hidden = false;
     empty.textContent = "Sem dados do extrato.";
@@ -584,7 +619,7 @@ function renderChartTopConvenios() {
   }
 
   const grupos = new Map();
-  for (const r of extratoData.rows) {
+  for (const r of rows) {
     const chave = r.conv ?? "—";
     grupos.set(chave, (grupos.get(chave) || 0) + r.valorC - r.valorD);
   }
@@ -630,10 +665,15 @@ function renderRanking() {
   const tbody = document.getElementById("ranking-tbody");
   const empty = document.getElementById("ranking-empty");
   const select = document.getElementById("ranking-convenio");
+  const selectOriginador = document.getElementById("ranking-originador");
 
   tbody.innerHTML = "";
 
-  if (!extratoData || !extratoData.rows.length) {
+  fillSelect(selectOriginador, ORIGINADORES.filter((o) => extratosPorOriginador[o]), "Todos Originadores");
+  const filtroOriginador = selectOriginador.value;
+  const rows = getExtratoRows(filtroOriginador);
+
+  if (!rows.length) {
     empty.hidden = false;
     fillSelect(select, [], "Todos Convênios");
     return;
@@ -641,7 +681,6 @@ function renderRanking() {
 
   empty.hidden = true;
 
-  const { rows } = extratoData;
   fillSelect(select, uniqueSorted(rows.map((r) => r.conv)), "Todos Convênios");
 
   const filtro = select.value;
@@ -695,12 +734,17 @@ function renderEvolucao() {
   const tbody = document.getElementById("evolucao-tbody");
   const empty = document.getElementById("evolucao-empty");
   const selectConv = document.getElementById("evolucao-convenio");
+  const selectOriginador = document.getElementById("evolucao-originador");
   const inputInicio = document.getElementById("evolucao-inicio");
   const inputFim = document.getElementById("evolucao-fim");
 
   tbody.innerHTML = "";
 
-  if (!extratoData || !extratoData.rows.length) {
+  fillSelect(selectOriginador, ORIGINADORES.filter((o) => extratosPorOriginador[o]), "Todos Originadores");
+  const filtroOriginador = selectOriginador.value;
+  const rows = getExtratoRows(filtroOriginador);
+
+  if (!rows.length) {
     empty.hidden = false;
     fillSelect(selectConv, [], "Todos Convênios");
     renderChartEvolucao([]);
@@ -709,7 +753,6 @@ function renderEvolucao() {
 
   empty.hidden = true;
 
-  const { rows } = extratoData;
   fillSelect(selectConv, uniqueSorted(rows.map((r) => r.conv)), "Todos Convênios");
 
   const filtroConv = selectConv.value;
@@ -891,6 +934,7 @@ function renderRetorno() {
 
 function computeConciliacao() {
   const map = new Map();
+  const extratoData = extratosPorOriginador[ORIGINADOR_RETORNO];
 
   if (extratoData) {
     for (const r of extratoData.rows) {
@@ -1242,18 +1286,33 @@ function renderAll() {
 /* ---------------- Setup ---------------- */
 
 function setupUploads() {
-  const inputExtrato = document.getElementById("input-extrato");
-  const inputRetorno = document.getElementById("input-retorno");
+  const grid = document.getElementById("extrato-originador-grid");
+  grid.innerHTML = ORIGINADORES.map((o) => {
+    const slug = slugOriginador(o);
+    return `
+      <div class="extrato-originador-card">
+        <h3>${o}</h3>
+        <label class="dropzone" for="input-extrato-${slug}">
+          <span id="extrato-filename-${slug}">Clique ou arraste o .xlsx aqui</span>
+        </label>
+        <input type="file" id="input-extrato-${slug}" accept=".xlsx,.xls" hidden>
+      </div>
+    `;
+  }).join("");
 
-  inputExtrato.addEventListener("change", (e) => {
-    if (e.target.files[0]) handleExtratoFile(e.target.files[0]);
+  ORIGINADORES.forEach((o) => {
+    const slug = slugOriginador(o);
+    const input = document.getElementById(`input-extrato-${slug}`);
+    input.addEventListener("change", (e) => {
+      if (e.target.files[0]) handleExtratoFile(e.target.files[0], o);
+    });
+    setupDropzone(`input-extrato-${slug}`, (file) => handleExtratoFile(file, o));
   });
 
+  const inputRetorno = document.getElementById("input-retorno");
   inputRetorno.addEventListener("change", (e) => {
     if (e.target.files[0]) handleRetornoFile(e.target.files[0]);
   });
-
-  setupDropzone("input-extrato", handleExtratoFile);
   setupDropzone("input-retorno", handleRetornoFile);
 }
 
@@ -1286,11 +1345,14 @@ function setupDropzone(inputId, handler) {
 
 function setupFilters() {
   document.getElementById("ranking-convenio").addEventListener("change", renderRanking);
+  document.getElementById("ranking-originador").addEventListener("change", renderRanking);
   document.getElementById("evolucao-convenio").addEventListener("change", renderEvolucao);
+  document.getElementById("evolucao-originador").addEventListener("change", renderEvolucao);
   document.getElementById("evolucao-inicio").addEventListener("change", renderEvolucao);
   document.getElementById("evolucao-fim").addEventListener("change", renderEvolucao);
   document.getElementById("retorno-convenio").addEventListener("change", renderRetorno);
   document.getElementById("retorno-competencia").addEventListener("change", renderRetorno);
+  document.getElementById("home-originador").addEventListener("change", renderHome);
   const concFilters = ["conciliacao-convenio", "conciliacao-mes", "conciliacao-status"];
   const clearBtn = document.getElementById("conciliacao-clear-filters");
 
@@ -1312,31 +1374,54 @@ function setupFilters() {
 function updateStatusPills() {
   const pillExtrato = document.getElementById("status-extrato");
   const pillRetorno = document.getElementById("status-retorno");
-  const cardExtrato = document.getElementById("import-status-extrato");
-  const cardRetorno = document.getElementById("import-status-retorno");
+  const statusGrid = document.getElementById("import-status-grid");
 
-  if (extratoData && extratoData.rows.length) {
+  const totalLanc = countExtratoLancamentos();
+  const qtdOriginadores = ORIGINADORES.filter((o) => extratosPorOriginador[o]).length;
+
+  if (totalLanc > 0) {
     pillExtrato.classList.add("ok");
-    pillExtrato.lastChild.textContent = ` Extrato: ${extratoData.rows.length} lançamentos`;
-    cardExtrato.classList.add("ok");
-    cardExtrato.querySelector("p").textContent = `${extratoData.rows.length} lançamentos importados`;
+    pillExtrato.lastChild.textContent = ` Extrato: ${totalLanc} lançamentos (${qtdOriginadores}/${ORIGINADORES.length} originadores)`;
   } else {
     pillExtrato.classList.remove("ok");
-    pillExtrato.lastChild.textContent = " Extrato não carregado";
-    cardExtrato.classList.remove("ok");
-    cardExtrato.querySelector("p").textContent = "Nenhum arquivo importado";
+    pillExtrato.lastChild.textContent = " Nenhum extrato carregado";
   }
 
   if (retornoData && retornoData.rows.length) {
     pillRetorno.classList.add("ok");
     pillRetorno.lastChild.textContent = ` Retorno: ${retornoData.rows.length} registros`;
-    cardRetorno.classList.add("ok");
-    cardRetorno.querySelector("p").textContent = `${retornoData.rows.length} registros importados`;
   } else {
     pillRetorno.classList.remove("ok");
     pillRetorno.lastChild.textContent = " Retorno não carregado";
-    cardRetorno.classList.remove("ok");
-    cardRetorno.querySelector("p").textContent = "Nenhum arquivo importado";
+  }
+
+  if (statusGrid) {
+    const cardsExtrato = ORIGINADORES.map((o) => {
+      const d = extratosPorOriginador[o];
+      const ok = d && d.rows.length;
+      return `
+        <div class="status-card ${ok ? "ok" : ""}">
+          <span class="status-dot"></span>
+          <div>
+            <strong>${o}</strong>
+            <p>${ok ? `${d.rows.length} lançamentos importados` : "Nenhum arquivo importado"}</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const okRetorno = retornoData && retornoData.rows.length;
+    const cardRetorno = `
+      <div class="status-card ${okRetorno ? "ok" : ""}">
+        <span class="status-dot"></span>
+        <div>
+          <strong>Arquivo Retorno (VemCard)</strong>
+          <p>${okRetorno ? `${retornoData.rows.length} registros importados` : "Nenhum arquivo importado"}</p>
+        </div>
+      </div>
+    `;
+
+    statusGrid.innerHTML = cardsExtrato + cardRetorno;
   }
 }
 
@@ -1372,6 +1457,7 @@ function exportConciliacaoExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhasConciliacao), "Conciliação");
 
+  const extratoData = extratosPorOriginador[ORIGINADOR_RETORNO];
   if (extratoData && extratoData.rows.length) {
     const { dataCol } = extratoData;
 
@@ -1412,18 +1498,26 @@ function setupClear() {
     if (!confirm("Remover todos os dados importados?")) return;
 
     localStorage.removeItem(STORAGE_EXTRATO);
+    localStorage.removeItem(STORAGE_EXTRATOS);
     localStorage.removeItem(STORAGE_RETORNO);
     localStorage.removeItem(STORAGE_EXTRATO_SNAPSHOT);
-    extratoData = null;
+    ORIGINADORES.forEach((o) => (extratosPorOriginador[o] = null));
     retornoData = null;
+    sbDelete("extratos").catch(() => {});
     sbDelete("extrato").catch(() => {});
     sbDelete("retorno").catch(() => {});
 
-    document.getElementById("extrato-filename").textContent = "Clique ou arraste o arquivo .xlsx aqui";
+    ORIGINADORES.forEach((o) => {
+      const slug = slugOriginador(o);
+      const fnEl = document.getElementById(`extrato-filename-${slug}`);
+      if (fnEl) fnEl.textContent = "Clique ou arraste o .xlsx aqui";
+      const labelEl = document.querySelector(`label[for="input-extrato-${slug}"]`);
+      if (labelEl) labelEl.classList.remove("loaded");
+      const inputEl = document.getElementById(`input-extrato-${slug}`);
+      if (inputEl) inputEl.value = "";
+    });
     document.getElementById("retorno-filename").textContent = "Clique ou arraste o arquivo .csv aqui";
-    document.querySelector('label[for="input-extrato"]').classList.remove("loaded");
     document.querySelector('label[for="input-retorno"]').classList.remove("loaded");
-    document.getElementById("input-extrato").value = "";
     document.getElementById("input-retorno").value = "";
 
     renderAll();
@@ -1431,11 +1525,18 @@ function setupClear() {
   });
 }
 
-function applyLoadedExtrato() {
-  if (!extratoData) return;
-  localStorage.setItem(STORAGE_EXTRATO, JSON.stringify(extratoData));
-  document.getElementById("extrato-filename").textContent = "✅ Extrato carregado";
-  document.querySelector('label[for="input-extrato"]').classList.add("loaded");
+function applyLoadedExtrato(originador) {
+  const d = extratosPorOriginador[originador];
+  if (!d) return;
+  const slug = slugOriginador(originador);
+  const fnEl = document.getElementById(`extrato-filename-${slug}`);
+  if (fnEl) fnEl.textContent = "✅ Extrato carregado";
+  const labelEl = document.querySelector(`label[for="input-extrato-${slug}"]`);
+  if (labelEl) labelEl.classList.add("loaded");
+}
+
+function applyAllLoadedExtratos() {
+  ORIGINADORES.forEach((o) => applyLoadedExtrato(o));
 }
 
 function applyLoadedRetorno() {
@@ -1447,27 +1548,52 @@ function applyLoadedRetorno() {
 
 function loadFromStorage() {
   // Carrega localStorage imediatamente (sem bloquear a UI)
-  try { extratoData = JSON.parse(localStorage.getItem(STORAGE_EXTRATO)); } catch { extratoData = null; }
+  try {
+    const novo = JSON.parse(localStorage.getItem(STORAGE_EXTRATOS));
+    if (novo) {
+      ORIGINADORES.forEach((o) => (extratosPorOriginador[o] = novo[o] || null));
+    } else {
+      // Migração do formato antigo (extrato único) -> Vem Benefícios
+      const legado = JSON.parse(localStorage.getItem(STORAGE_EXTRATO));
+      if (legado && legado.rows && legado.rows.length) {
+        legado.rows.forEach((r) => { if (!r.originador) r.originador = ORIGINADOR_RETORNO; });
+        extratosPorOriginador[ORIGINADOR_RETORNO] = legado;
+        localStorage.setItem(STORAGE_EXTRATOS, JSON.stringify(extratosPorOriginador));
+      }
+    }
+  } catch { /* ignora */ }
+
   try { retornoData = JSON.parse(localStorage.getItem(STORAGE_RETORNO)); } catch { retornoData = null; }
-  applyLoadedExtrato();
+  applyAllLoadedExtratos();
   applyLoadedRetorno();
 
   // Sincroniza com Supabase em background — atualiza se tiver dado mais recente
-  Promise.all([sbLoad("extrato"), sbLoad("retorno")])
-    .then(([extVal, retVal]) => {
+  Promise.all([sbLoad("extratos"), sbLoad("retorno"), sbLoad("extrato")])
+    .then(([extratosVal, retVal, legadoVal]) => {
       let atualizado = false;
 
-      if (extVal && extVal.importadoEm !== extratoData?.importadoEm) {
-        extratoData = extVal;
-        applyLoadedExtrato();
+      if (extratosVal) {
+        ORIGINADORES.forEach((o) => {
+          const remoto = extratosVal[o];
+          if (remoto && remoto.importadoEm !== extratosPorOriginador[o]?.importadoEm) {
+            extratosPorOriginador[o] = remoto;
+            atualizado = true;
+          }
+        });
+      } else if (legadoVal && legadoVal.rows && legadoVal.rows.length && !extratosPorOriginador[ORIGINADOR_RETORNO]) {
+        legadoVal.rows.forEach((r) => { if (!r.originador) r.originador = ORIGINADOR_RETORNO; });
+        extratosPorOriginador[ORIGINADOR_RETORNO] = legadoVal;
         atualizado = true;
       }
+
       if (retVal && retVal.importadoEm !== retornoData?.importadoEm) {
         retornoData = retVal;
         applyLoadedRetorno();
         atualizado = true;
       }
       if (atualizado) {
+        localStorage.setItem(STORAGE_EXTRATOS, JSON.stringify(extratosPorOriginador));
+        applyAllLoadedExtratos();
         renderAll();
         showToast("Dados atualizados do servidor.", "info", 3000);
       }

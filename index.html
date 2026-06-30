@@ -113,7 +113,7 @@
   <div class="sidebar-footer">
     <div class="status-pills">
       <div class="status-pill" id="status-extrato">
-        <span class="status-dot"></span> Extrato não carregado
+        <span class="status-dot"></span> Nenhum extrato carregado
       </div>
       <div class="status-pill" id="status-retorno">
         <span class="status-dot"></span> Retorno não carregado
@@ -139,6 +139,11 @@
       </div>
       <div class="home-header-right">
         <span class="home-last-update" id="home-last-update"></span>
+        <div class="field" style="margin-top:6px">
+          <select id="home-originador">
+            <option value="">Todos Originadores</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -291,43 +296,27 @@
       </div>
     </header>
 
-    <div class="grid-2">
-      <div class="panel">
-        <h2>Extrato Bancário</h2>
-        <p class="hint">Arquivo .xlsx com o extrato bancário (colunas de Data Movimentação, Convênio, Valor e Natureza)</p>
-        <label class="dropzone" for="input-extrato">
-          <span id="extrato-filename">Clique ou arraste o arquivo .xlsx aqui</span>
-        </label>
-        <input type="file" id="input-extrato" accept=".xlsx,.xls" hidden>
-      </div>
-
-      <div class="panel">
-        <h2>Arquivo Retorno BPO</h2>
-        <p class="hint">Arquivo .csv com os dados de retorno (convenio, competencia, total_valor_descontado)</p>
-        <label class="dropzone" for="input-retorno">
-          <span id="retorno-filename">Clique ou arraste o arquivo .csv aqui</span>
-        </label>
-        <input type="file" id="input-retorno" accept=".csv" hidden>
+    <div class="panel">
+      <h2>Extrato Bancário por Originador</h2>
+      <p class="hint">Um arquivo .xlsx por originador (colunas de Data Movimentação, Convênio, Valor e Natureza)</p>
+      <div class="grid-4" id="extrato-originador-grid">
+        <!-- preenchido via JS a partir de ORIGINADORES -->
       </div>
     </div>
 
     <div class="panel">
+      <h2>Arquivo Retorno BPO</h2>
+      <p class="hint">Arquivo .csv com os dados de retorno (convenio, competencia, total_valor_descontado) — fonte única: VemCard</p>
+      <label class="dropzone" for="input-retorno">
+        <span id="retorno-filename">Clique ou arraste o arquivo .csv aqui</span>
+      </label>
+      <input type="file" id="input-retorno" accept=".csv" hidden>
+    </div>
+
+    <div class="panel">
       <h2>Status dos Dados</h2>
-      <div class="status-grid">
-        <div class="status-card" id="import-status-extrato">
-          <span class="status-dot"></span>
-          <div>
-            <strong>Extrato</strong>
-            <p>Nenhum arquivo importado</p>
-          </div>
-        </div>
-        <div class="status-card" id="import-status-retorno">
-          <span class="status-dot"></span>
-          <div>
-            <strong>Arquivo Retorno</strong>
-            <p>Nenhum arquivo importado</p>
-          </div>
-        </div>
+      <div class="status-grid" id="import-status-grid">
+        <!-- preenchido via JS: 1 card por originador + 1 para retorno -->
       </div>
       <p class="hint">Os dados ficam salvos no navegador (localStorage) e continuam disponíveis ao recarregar a página.</p>
     </div>
@@ -345,6 +334,12 @@
     <div class="panel">
       <div class="panel-toolbar">
         <div class="filters">
+          <div class="field">
+            <label for="ranking-originador">Originador</label>
+            <select id="ranking-originador">
+              <option value="">Todos Originadores</option>
+            </select>
+          </div>
           <div class="field">
             <label for="ranking-convenio">Convênio</label>
             <select id="ranking-convenio">
@@ -384,6 +379,12 @@
     <div class="panel">
       <div class="panel-toolbar">
         <div class="filters">
+          <div class="field">
+            <label for="evolucao-originador">Originador</label>
+            <select id="evolucao-originador">
+              <option value="">Todos Originadores</option>
+            </select>
+          </div>
           <div class="field">
             <label for="evolucao-convenio">Convênio</label>
             <select id="evolucao-convenio">
