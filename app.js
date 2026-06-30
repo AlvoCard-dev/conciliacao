@@ -1413,6 +1413,7 @@ function setupClear() {
 
     localStorage.removeItem(STORAGE_EXTRATO);
     localStorage.removeItem(STORAGE_RETORNO);
+    localStorage.removeItem(STORAGE_EXTRATO_SNAPSHOT);
     extratoData = null;
     retornoData = null;
     sbDelete("extrato").catch(() => {});
