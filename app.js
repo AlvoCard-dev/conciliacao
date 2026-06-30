@@ -6,7 +6,8 @@ const STORAGE_RETORNO = "alvo_card_retorno_v1";
 const STORAGE_SESSION = "alvo_card_session_v1";
 const STORAGE_EXTRATO_SNAPSHOT = "alvo_card_extrato_snapshot_v1";
 
-const ORIGINADORES = ["Vem Benefícios", "AlvoCard", "EiCard", "Juntos Card"];
+// AlvoCard, EiCard e Juntos Card temporariamente removidos — reativar adicionando de volta ao array
+const ORIGINADORES = ["Vem Benefícios"];
 const ORIGINADOR_RETORNO = "Vem Benefícios"; // única origem cruzada com o BPO
 
 /* ---------------- Supabase ---------------- */
